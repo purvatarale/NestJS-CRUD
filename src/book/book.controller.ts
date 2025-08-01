@@ -1,50 +1,48 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put } from "@nestjs/common";
-import { BookService, Book } from "./book.service";
-
-class CreateBookDto{
-    title:string;
-    author:string;
-}
-
-class UpdateBookDto{
-    title:string;
-    author:string;
-}
-
-@Controller('books')
-export class BookController{
-    constructor(private readonly booksService:BookService){}
-
+import {
+    Controller,
+    Get,
+    Post,
+    Put,
+    Delete,
+    Param,
+    Body,
+    ParseIntPipe,
+  } from '@nestjs/common';
+  import { BookService } from './book.service';
+  import { CreateBookDto } from './create-book.dto';
+  import { UpdateBookDto } from './update-book.dto';
+  import { Book } from './entities/book.entity';
+  
+  @Controller('books')
+  export class BookController {
+    constructor(private readonly booksService: BookService) {}
+  
     @Get()
-    findAll():Book[]{
-        return this.booksService.findAll();
+    findAll(): Promise<Book[]> {
+      return this.booksService.findAll();
     }
-
+  
     @Get(':id')
-    findOne(@Param('id', ParseIntPipe) id:number):Book{
-        return this.booksService.findOne(id);
+    findOne(@Param('id', ParseIntPipe) id: number): Promise<Book> {
+      return this.booksService.findOne(id);
     }
-
+  
     @Post()
-    create(@Body() createBookDto: CreateBookDto):Book{
-        return this.booksService.create(createBookDto.title, createBookDto.author)
+    create(@Body() createBookDto: CreateBookDto): Promise<Book> {
+      return this.booksService.create(createBookDto);
     }
-
+  
     @Put(':id')
-    update(@Param('id',ParseIntPipe)id:number, @Body() updateBookDto:UpdateBookDto):Book{
-        return this.booksService.update(id,updateBookDto.title, updateBookDto.author);
+    update(
+      @Param('id', ParseIntPipe) id: number,
+      @Body() updateBookDto: UpdateBookDto,
+    ): Promise<Book> {
+      return this.booksService.update(id, updateBookDto);
     }
-
+  
     @Delete(':id')
-    remove(@Param('id',ParseIntPipe) id:number):{message:string}{
-        this.booksService.remove(id);
-        return {message: `Book with id ${id} is deleted`}
+    remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+      return this.booksService.remove(id);
     }
-
-    @Delete()
-    clearAll(): {message:string} {
-        this.booksService.clearAll();
-        return { message: 'All books have been deleted successfully'}
-    }
-
-}
+  }
+  

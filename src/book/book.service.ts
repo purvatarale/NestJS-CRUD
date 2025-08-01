@@ -1,49 +1,46 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-
-export interface Book{
-    id:number,
-    title:string,
-    author:string
-}
+import { UpdateBookDto } from "./update-book.dto";
+import { CreateBookDto } from "./create-book.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Book } from "./entities/book.entity";
 
 @Injectable()
-export class BookService{
-    private books:Book[]=[]
-    private idCounter=1
-    findAll():Book[]{
-        return this.books
+export class BookService {
+  constructor(
+    @InjectRepository(Book)
+    private booksRepository: Repository<Book>,
+  ) {}
+
+  findAll(): Promise<Book[]> {
+    return this.booksRepository.find();
+  }
+
+  async findOne(id: number): Promise<Book> {
+    const book = await this.booksRepository.findOneBy({ id });
+    if (!book) {
+      throw new NotFoundException(`Book with ID ${id} not found`);
     }
-    findOne(id:number):Book{
-        const book=this.books.find((b)=>b.id===id)
-        if(!book){
-            throw new NotFoundException(`Book with ID ${id} not found`)
-        }
-        return book;
+    return book;
+  }
+
+  create(createBookDto: CreateBookDto): Promise<Book> {
+    const book = this.booksRepository.create(createBookDto);
+    return this.booksRepository.save(book);
+  }
+
+  async update(id: number, updateBookDto: UpdateBookDto): Promise<Book> {
+    const book = await this.findOne(id);
+    Object.assign(book, updateBookDto);
+    return this.booksRepository.save(book);
+  }
+
+  async remove(id: number): Promise<void> {
+    const result = await this.booksRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Book with ID ${id} not found`);
     }
-    create(title:string, author:string):Book{
-        const book: Book={
-            id: this.idCounter++,
-            title,
-            author,
-        };
-        this.books.push(book);
-        return book;
-    }
-    update(id:number, title:string, author:string): Book{
-        const book = this.findOne(id);
-        book.title=title;
-        book.author=author
-        return book;
-    }
-    remove(id:number):void{
-        const index=this.books.findIndex((b)=>b.id===id);
-        if(index===-1){
-            throw new NotFoundException(`Book with ${id} not found`)
-        }
-        this.books.splice(index,1)
-    }
-    clearAll(): void {
-        this.books = [];
-        this.idCounter = 1;
-      }      
+  }
 }
+
+export { Book };
